@@ -1,290 +1,213 @@
+// pages/index.js
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
-const ChatbotWidget = () => {
-    const [open, setOpen] = useState(true);
+export default function Home() {
     const [messages, setMessages] = useState([
         {
-            role: 'assistant',
-            content: "Hi 👋 I'm your Thryve AI Chatbot. Ask me anything about credit repair! 💳",
-        },
+            role: "assistant",
+            content: "👋 Hi! I’m your Thryve AI Chatbot. Ask me anything about credit repair, our services, or how to get started! 💳"
+        }
     ]);
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState("");
+    const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef(null);
-    const [userMessageCount, setUserMessageCount] = useState(0); // Counter for user messages
-
-    // State for lead capture form
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [collectingInfo, setCollectingInfo] = useState(false);
-    const [infoCollected, setInfoCollected] = useState(false);
-
-    const toggleChat = () => setOpen(!open);
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, open]);
 
     const sendMessage = async () => {
         if (!input.trim() || loading) return;
-
-        const userMessage = { role: 'user', content: input };
-        const newMessages = [...messages, userMessage];
+        const newMessages = [...messages, { role: "user", content: input }];
         setMessages(newMessages);
-        setInput('');
+        setInput("");
         setLoading(true);
-        setUserMessageCount(userMessageCount + 1); // Increment user message count
-
         try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ messages: newMessages }),
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: newMessages })
             });
-
-            if (!response.ok) {
-                setMessages(prevMessages => [
-                    ...prevMessages,
-                    {
-                        role: 'error',
-                        content: "Sorry, I encountered an error while processing your request.",
-                    },
-                ]);
-            } else {
-                const data = await response.json();
-                setMessages([
-                    ...newMessages,
-                    { role: 'assistant', content: data.reply || "Sorry, I didn't catch that. Can you try again?" },
-                ]);
-            }
+            const data = await res.json();
+            setMessages([...newMessages, { role: "assistant", content: data.reply || "Sorry, I didn't catch that. Try again?" }]);
         } catch (error) {
-            console.error("Chatbot Error:", error);
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    role: 'error',
-                    content: "Sorry, I encountered an error while processing your request.",
-                },
-            ]);
-        } finally {
-            setLoading(false);
-        }
-
-        // Start collecting info after 2 user messages (adjust as needed)
-        if (userMessageCount >= 2 && !collectingInfo && !infoCollected) {
-            setCollectingInfo(true);
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    role: 'assistant',
-                    content: "Unlock the secrets to disputing hard inquiries! Get our free guide: 'The Easy & Fast Way to Delete Inquiries' by providing your name and email below.",
-                },
+            setMessages([
+                ...newMessages,
+                { role: "assistant", content: "⚠️ Error contacting server. Please try again." }
             ]);
         }
-    };
-
-    const handleInfoSubmit = async () => {
-        if (!name || !email) {
-            alert('Please provide your name and email.');
-            return;
-        }
-
-        setMessages(prevMessages => [
-            ...prevMessages,
-            {
-                role: 'assistant',
-                content: `Thank you, ${name}! We'll email your copy of 'The Easy and Fast Way to Delete Hard Inquiries' to ${email}. We'll also send you a text message with the download link.`,
-            },
-        ]);
-        setCollectingInfo(false);
-        setInfoCollected(true);
-
-        // Your Zapier Webhook URL
-        const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/22909312/27596qv/';
-
-        try {
-            const response = await fetch(zapierWebhookUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email, phone }), // Include phone
-            });
-
-            if (!response.ok) {
-                console.error('Error sending data to Zapier:', response.status);
-                setMessages(prevMessages => [
-                    ...prevMessages,
-                    {
-                        role: 'assistant',
-                        content: "There was an issue processing your request. Please try again later.",
-                    },
-                ]);
-            } else {
-                console.log('Data sent to Zapier successfully!');
-            }
-        } catch (error) {
-            console.error('Fetch error when sending to Zapier:', error);
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    role: 'assistant',
-                    content: "There was a connection error. Please try again.",
-                },
-            ]);
-        }
+        setLoading(false);
     };
 
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && !loading) {
-            sendMessage();
-        }
+        if (e.key === "Enter") sendMessage();
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            zIndex: 1000,
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
-        }}>
-            {open ? (
-                <div style={{ width: '350px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'auto' }}>
-                    <div style={{
-                        backgroundColor: '#007bff',
-                        color: '#fff',
-                        padding: '12px',
-                        fontWeight: 'bold',
-                        borderTopLeftRadius: '12px',
-                        borderTopRightRadius: '12px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        position: 'relative',
-                    }}>
-                        <strong style={{ fontSize: '1.1em' }}>Thryve AI Chat</strong>
-                        <button
-                            onClick={toggleChat}
+        <div>
+            <div
+                style={{
+                    position: "fixed",
+                    bottom: "20px",
+                    right: "20px",
+                    zIndex: 9999,
+                    fontFamily: "sans-serif"
+                }}
+            >
+                {open ? (
+                    <div
+                        style={{
+                            width: "350px",
+                            maxHeight: "500px",
+                            borderRadius: "12px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                            backgroundColor: "#fff",
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden"
+                        }}
+                    >
+                        <div
                             style={{
-                                border: 'none',
-                                backgroundColor: 'transparent',
-                                fontSize: '18px',
-                                cursor: 'pointer',
-                                color: '#fff',
-                                position: 'absolute',
-                                right: '10px',
+                                padding: "14px",
+                                backgroundColor: "#2563eb",
+                                color: "#fff",
+                                fontWeight: "bold",
+                                fontSize: "17px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                position: "relative"
                             }}
                         >
-                            ×
-                        </button>
-                    </div>
-                    <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px' }}>
-                        {messages.map((msg, index) => (
-                            <div key={index} style={{ marginBottom: '12px' }}>
-                                <div style={{
-                                    backgroundColor: msg.role === 'user' ? '#e6f7ff' : '#f0f0f0',
-                                    borderRadius: '20px',
-                                    padding: '10px 18px',
-                                    alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                                    maxWidth: '80%',
-                                    wordWrap: 'break-word',
-                                    display: 'inline-block',
-                                }}>
-                                    <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
-                                    <div style={{ height: 'auto' }}>
-                                        <ReactMarkdown
-                                            children={msg.content}
-                                            style={{ whiteSpace: "pre-wrap" }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        <div ref={bottomRef} />
-                    </div>
-                    {collectingInfo && !infoCollected ? (
-                        <div style={{ padding: '10px', borderTop: '1px solid #ddd' }}>
-                            <input
-                                type="text"
-                                placeholder="Your Name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                            />
-                            <input
-                                type="email"
-                                placeholder="Your Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                            />
-                            <input
-                                type="tel"
-                                placeholder="Your Phone (Optional)"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                            />
-                            <button onClick={handleInfoSubmit} style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                Get Your Free Guide
+                            Thryve AI Chatbot
+                            <button
+                                onClick={() => setOpen(false)}
+                                style={{
+                                    position: "absolute",
+                                    right: "14px",
+                                    top: "8px",
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "20px",
+                                    color: "#fff",
+                                    cursor: "pointer"
+                                }}
+                                aria-label="Close chat"
+                            >
+                                ×
                             </button>
                         </div>
-                    ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', padding: '10px', borderTop: '1px solid #ddd' }}>
+                        <div style={{
+                            flex: 1,
+                            padding: "12px 10px",
+                            overflowY: "auto",
+                            display: "flex",
+                            flexDirection: "column"
+                        }}>
+                            {messages.map((m, i) => (
+                                <div
+                                    key={i}
+                                    style={{
+                                        backgroundColor: m.role === "user" ? "#e0eaff" : "#f3fdf6",
+                                        color: "#232323",
+                                        padding: "10px 16px",
+                                        borderRadius: "18px",
+                                        margin: "7px 0",
+                                        maxWidth: "80%",
+                                        alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                                        wordBreak: "break-word",
+                                        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                                        fontSize: "15px",
+                                        fontWeight: 400
+                                    }}
+                                >
+                                    <ReactMarkdown
+                                        components={{
+                                            a: ({ node, ...props }) => (
+                                                <a
+                                                    {...props}
+                                                    style={{ color: "#2563eb", fontWeight: "bold" }}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                />
+                                            )
+                                        }}
+                                    >
+                                        {m.content}
+                                    </ReactMarkdown>
+                                </div>
+                            ))}
+                            {loading && (
+                                <div
+                                    style={{
+                                        color: "#aaa",
+                                        fontStyle: "italic",
+                                        margin: "10px",
+                                        fontSize: "14px"
+                                    }}
+                                >
+                                    Typing…
+                                </div>
+                            )}
+                            <div ref={bottomRef} />
+                        </div>
+                        <div style={{ display: "flex", borderTop: "1px solid #eee", background: "#fafbfc" }}>
                             <input
                                 type="text"
-                                placeholder="Type your message..."
+                                placeholder="Type your message…"
                                 value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #eee' }}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyPress}
+                                style={{
+                                    flex: 1,
+                                    padding: "12px",
+                                    border: "none",
+                                    fontSize: "15px",
+                                    background: "transparent"
+                                }}
                                 disabled={loading}
                             />
                             <button
                                 onClick={sendMessage}
                                 disabled={loading}
                                 style={{
-                                    padding: '10px 18px',
-                                    backgroundColor: '#007bff',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    marginLeft: '8px',
-                                    cursor: loading ? 'not-allowed' : 'pointer',
-                                    fontWeight: 'bold',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.10)',
-                                    opacity: loading ? 0.7 : 1,
+                                    padding: "0 18px",
+                                    backgroundColor: "#2563eb",
+                                    color: "#fff",
+                                    border: "none",
+                                    cursor: loading ? "default" : "pointer",
+                                    fontSize: "16px",
+                                    fontWeight: "bold"
                                 }}
                             >
-                                {loading ? "..." : "Send"}
+                                {loading ? "…" : "Send"}
                             </button>
                         </div>
-                    )}
-                </div>
-            ) : (
-                <button
-                    onClick={toggleChat}
-                    style={{
-                        backgroundColor: '#007bff',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '12px 18px',
-                        borderRadius: '25px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-                    }}
-                >
-                    💬 Thryve Chatbot
-                </button>
-            )}
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setOpen(true)}
+                        style={{
+                            backgroundColor: "#2563eb",
+                            color: "#fff",
+                            border: "none",
+                            padding: "13px 22px",
+                            borderRadius: "28px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                            fontSize: "15px",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.12)"
+                        }}
+                    >
+                        💬 Thryve Chatbot
+                    </button>
+                )}
+            </div>
         </div>
     );
-};
-
-export default ChatbotWidget;
+}
