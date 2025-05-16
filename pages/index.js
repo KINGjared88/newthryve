@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import DOMPurify from 'dompurify'; // Install with: npm install dompurify
 
 const ChatbotWidget = () => {
     const [open, setOpen] = useState(true);
@@ -12,6 +12,7 @@ const ChatbotWidget = () => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef(null);
+    const inputRef = useRef(null);
     const [userMessageCount, setUserMessageCount] = useState(0);
     const [collectingInfo, setCollectingInfo] = useState(false);
     const [infoCollected, setInfoCollected] = useState(false);
@@ -25,6 +26,12 @@ const ChatbotWidget = () => {
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        if (open && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [open]);
 
     const sendMessage = async () => {
         if (!input.trim() || loading) return;
@@ -71,6 +78,9 @@ const ChatbotWidget = () => {
             ]);
         } finally {
             setLoading(false);
+            if (open && inputRef.current) {
+                inputRef.current.focus();
+            }
         }
     };
 
@@ -90,7 +100,7 @@ const ChatbotWidget = () => {
             },
             {
                 role: 'leadMagnetOffer',
-                content: null, // Placeholder for buttons
+                content: null,
             }
         ]);
     };
@@ -126,8 +136,7 @@ const ChatbotWidget = () => {
         setCollectingInfo(false);
         setInfoCollected(true);
 
-        // Your Zapier Webhook URL
-        const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/22909312/27596qv/';
+        const zapierWebhookUrl = 'YOUR_ZAPIER_WEBHOOK_URL'; // Replace with your actual Zapier webhook URL
 
         try {
             const response = await fetch(zapierWebhookUrl, {
@@ -232,6 +241,7 @@ const ChatbotWidget = () => {
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     lineHeight: '1.3',
+                                    minHeight: '40px', // Ensure a minimum height for empty messages
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     {msg.role === 'leadMagnetOffer' ? (
@@ -244,22 +254,14 @@ const ChatbotWidget = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
-                                            <ReactMarkdown
-                                                children={msg.content}
-                                                components={{
-                                                    strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
-                                                    a: ({ node, ...props }) => <a style={{ color: '#007bff', textDecoration: 'underline' }} {...props} />,
-                                                }}
-                                            />
-                                        </div>
+                                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content) }} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}></div>
                                     )}
                                 </div>
                             </div>
                         ))}
                         <div ref={bottomRef} />
                     </div>
-                    {collectingInfo && !infoCollected && offeredLeadMagnet ? (
+                    {collectingInfo && !infoCollected ? (
                         <div style={{ padding: '10px', borderTop: '1px solid #ddd' }}>
                             <input
                                 type="text"
@@ -289,6 +291,7 @@ const ChatbotWidget = () => {
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', padding: '10px', borderTop: '1px solid #ddd' }}>
                             <input
+                                ref={inputRef}
                                 type="text"
                                 placeholder="Type your message..."
                                 value={input}
