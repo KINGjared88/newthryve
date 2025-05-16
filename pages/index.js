@@ -74,8 +74,8 @@ const ChatbotWidget = () => {
                 {
                     role: 'error',
                     content: "Sorry, I encountered an error while processing your request.",
-                    },
-                ]);
+                },
+            ]);
         } finally {
             setLoading(false);
             if (open && inputRef.current) {
@@ -176,7 +176,15 @@ const ChatbotWidget = () => {
         const inquiryKeywords = ['inquiry', 'inquiries', 'hard inquiry'];
 
         if (!offeredLeadMagnet && !collectingInfo && !infoCollected && (userMessageCount >= 3 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.includes(keyword))))) {
-            offerLeadMagnet();
+            // Move lead magnet offer directly into the chat
+            setMessages(prevMessages => [
+                ...prevMessages,
+                {
+                    role: 'assistant',
+                    content: "👋 Interested in learning the secrets of removing hard inquiries? [Yes, tell me more!](#) | [No, thanks.](#)",
+                },
+            ]);
+            setOfferedLeadMagnet(true); // Still set this to avoid multiple offers
         }
 
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -241,11 +249,12 @@ const ChatbotWidget = () => {
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     lineHeight: '1.3',
-                                    minHeight: 'auto', // Adjusted minHeight
+                                    minHeight: 'auto', // Ensure bubbles size to content
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     {msg.role === 'leadMagnetOffer' ? (
                                         <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
+                                            {/* These buttons will likely need custom click handlers within ReactMarkdown */}
                                             <button onClick={handleShowLeadMagnetForm} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                                                 Yes, tell me more!
                                             </button>
