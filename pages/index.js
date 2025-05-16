@@ -18,7 +18,7 @@ const ChatbotWidget = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [showLeadMagnetPrompt, setShowLeadMagnetPrompt] = useState(false);
+    const [offeredLeadMagnet, setOfferedLeadMagnet] = useState(false);
 
     const toggleChat = () => setOpen(!open);
 
@@ -80,16 +80,34 @@ const ChatbotWidget = () => {
         }
     };
 
-    const handleShowLeadMagnet = () => {
-        setShowLeadMagnetPrompt(false);
-        setCollectingInfo(true);
+    const offerLeadMagnet = () => {
+        setOfferedLeadMagnet(true);
         setMessages(prevMessages => [
             ...prevMessages,
             {
                 role: 'assistant',
-                content: "Great! To get your free guide: 'The Easy & Fast Way to Delete Inquiries', please provide your name, email, and phone below:",
+                content: "👋 Interested in learning the secrets of removing hard inquiries? Click below to get our free guide: 'The Easy & Fast Way to Delete Inquiries'!",
             },
+            {
+                role: 'leadMagnetOffer',
+                content: null, // Placeholder for buttons
+            }
         ]);
+    };
+
+    const handleShowLeadMagnetForm = () => {
+        setCollectingInfo(true);
+        setOfferedLeadMagnet(false);
+        setMessages(prevMessages => prevMessages.map(msg =>
+            msg.role === 'leadMagnetOffer' ?
+            { role: 'assistant', content: "Great! To get your free guide, please provide your name, email, and phone below:" } :
+            msg
+        ));
+    };
+
+    const handleRejectLeadMagnet = () => {
+        setOfferedLeadMagnet(false);
+        setMessages(prevMessages => prevMessages.filter(msg => msg.role !== 'leadMagnetOffer'));
     };
 
     const handleInfoSubmit = async () => {
@@ -148,12 +166,12 @@ const ChatbotWidget = () => {
         const lastUserMessage = messages.slice(-1)[0]?.content?.toLowerCase();
         const inquiryKeywords = ['inquiry', 'inquiries', 'hard inquiry'];
 
-        if (!collectingInfo && !infoCollected && (userMessageCount >= 3 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.includes(keyword))))) {
-            setShowLeadMagnetPrompt(true);
+        if (!offeredLeadMagnet && !collectingInfo && !infoCollected && (userMessageCount >= 3 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.includes(keyword))))) {
+            offerLeadMagnet();
         }
 
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, userMessageCount, collectingInfo, infoCollected]);
+    }, [messages, userMessageCount, offeredLeadMagnet, collectingInfo, infoCollected]);
 
     return (
         <div style={{
@@ -172,7 +190,7 @@ const ChatbotWidget = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    maxHeight: '500px', // Enable scroll
+                    maxHeight: '500px',
                 }}>
                     <div style={{
                         backgroundColor: '#007bff',
@@ -206,37 +224,42 @@ const ChatbotWidget = () => {
                         {messages.map((msg, index) => (
                             <div key={index} style={{ marginBottom: '12px' }}>
                                 <div style={{
-                                    backgroundColor: msg.role === 'user' ? '#e6f7ff' : '#f0f0f0',
+                                    backgroundColor: msg.role === 'user' ? '#e6f7ff' : (msg.role === 'assistant' || msg.role === 'leadMagnetOffer' ? '#f0f0f0' : '#ffe0b2'),
                                     borderRadius: '20px',
                                     padding: '10px 18px',
                                     alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                                     maxWidth: '80%',
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
-                                    lineHeight: '1.3', // Adjust line spacing
+                                    lineHeight: '1.3',
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
-                                    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
-                                        <ReactMarkdown
-                                            children={msg.content}
-                                            components={{
-                                                strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
-                                            }}
-                                        />
-                                    </div>
+                                    {msg.role === 'leadMagnetOffer' ? (
+                                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
+                                            <button onClick={handleShowLeadMagnetForm} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                                Yes, tell me more!
+                                            </button>
+                                            <button onClick={handleRejectLeadMagnet} style={{ padding: '8px 15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                                No, thanks.
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                                            <ReactMarkdown
+                                                children={msg.content}
+                                                components={{
+                                                    strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
+                                                    a: ({ node, ...props }) => <a style={{ color: '#007bff', textDecoration: 'underline' }} {...props} />,
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
                         <div ref={bottomRef} />
                     </div>
-                    {showLeadMagnetPrompt && !collectingInfo && !infoCollected ? (
-                        <div style={{ padding: '10px', borderTop: '1px solid #ddd', textAlign: 'center' }}>
-                            <p>Interested in learning how to remove hard inquiries?</p>
-                            <button onClick={handleShowLeadMagnet} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                                Yes, tell me more!
-                            </button>
-                        </div>
-                    ) : collectingInfo && !infoCollected ? (
+                    {collectingInfo && !infoCollected && offeredLeadMagnet ? (
                         <div style={{ padding: '10px', borderTop: '1px solid #ddd' }}>
                             <input
                                 type="text"
