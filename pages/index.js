@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
-// ---- CONFIG ----
 const LEAD_MAGNET_CONTENT = `Hey, welcome to Thryve! 👋
 
 Want a free copy of our “24-Hour Inquiry Removal Guide” that shows you how to quickly remove hard inquiries from your credit report—step by step?`;
@@ -28,6 +27,7 @@ const ChatbotWidget = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [consentChecked, setConsentChecked] = useState(false);
 
   // Auto-focus input
   useEffect(() => {
@@ -52,6 +52,45 @@ const ChatbotWidget = () => {
     setMessages(newMessages);
     setInput("");
     setLoading(true);
+
+    // --- Compliance: Intercept for phone/lending keywords BEFORE OpenAI ---
+    const lowerInput = input.toLowerCase();
+    // 1. Phone number request
+    if (
+      lowerInput.includes("phone number") ||
+      lowerInput.includes("call you") ||
+      lowerInput.includes("contact number") ||
+      lowerInput.includes("reach you") ||
+      lowerInput.includes("text you") ||
+      lowerInput.includes("can I call") ||
+      lowerInput.includes("can i have your number")
+    ) {
+      addMessage({
+        role: "assistant",
+        content:
+          "We don't have a public support line, but you can easily [schedule a time to talk](https://thryvecredit.com/consultation) or [send us a message](https://thryvecredit.com/contact-us).",
+      });
+      setLoading(false);
+      return;
+    }
+    // 2. Lending/debt consolidation request
+    if (
+      lowerInput.includes("debt consolidation") ||
+      lowerInput.includes("loan") ||
+      lowerInput.includes("refinance") ||
+      lowerInput.includes("consolidate debt") ||
+      lowerInput.includes("consolidation") ||
+      lowerInput.includes("lending") ||
+      lowerInput.includes("personal loan")
+    ) {
+      addMessage({
+        role: "assistant",
+        content:
+          "Great question! We can definitely help with debt consolidation and lending options through our Done-For-You program. Please [schedule an appointment here](https://thryvecredit.com/consultation) for a free, no-obligation consult and we'll go over your best options.",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/chat", {
@@ -95,10 +134,11 @@ const ChatbotWidget = () => {
   const handleLeadMagnet = (choice) => {
     if (choice === "yes") {
       setCollectingInfo(true);
+      setConsentChecked(false); // reset consent checkbox
       addMessage({
         role: "assistant",
         content:
-          "Great! Enter your name and email below (phone is optional) and we’ll send your free guide.",
+          "Great! Enter your name and email below (phone is optional) and we’ll send your free guide. <br/> <small>By checking the box below, you agree to be contacted by Thryve Credit Solutions via email and SMS. See our Terms of Service for details.</small>",
         type: "infoform",
       });
     } else {
@@ -120,6 +160,10 @@ const ChatbotWidget = () => {
   const handleInfoSubmit = async () => {
     if (!name.trim() || !email.trim()) {
       alert("Please provide your name and email.");
+      return;
+    }
+    if (!consentChecked) {
+      alert("You must agree to be contacted by Thryve Credit Solutions.");
       return;
     }
     addMessage({
@@ -181,6 +225,8 @@ const ChatbotWidget = () => {
         zIndex: 1000,
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
+        background: "transparent",
+        boxShadow: "none",
       }}
     >
       {open ? (
@@ -213,11 +259,9 @@ const ChatbotWidget = () => {
             <strong style={{ fontSize: "1.1em" }}>Thryve AI Chat</strong>
             <button
               onClick={() => {
-                // Close the parent iframe if embedded
                 if (window.parent) {
                   window.parent.postMessage("closeThryveChatbot", "*");
                 }
-                // Optionally also setOpen(false); if using as a standalone component
               }}
               style={{
                 border: "none",
@@ -344,16 +388,29 @@ const ChatbotWidget = () => {
                           border: "1px solid #ccc",
                         }}
                       />
+                      <label style={{ display: "block", margin: "10px 0 8px 0", fontSize: "0.97em" }}>
+                        <input
+                          type="checkbox"
+                          checked={consentChecked}
+                          onChange={(e) => setConsentChecked(e.target.checked)}
+                          style={{ marginRight: "8px" }}
+                        />
+                        I agree to be contacted by Thryve Credit Solutions via email and SMS.
+                        <a href="https://thryvecredit.com/terms-of-service" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff", marginLeft: "5px", textDecoration: "underline" }}>
+                          Terms of Service
+                        </a>
+                      </label>
                       <button
                         onClick={handleInfoSubmit}
+                        disabled={!consentChecked}
                         style={{
                           width: "100%",
                           padding: "10px",
-                          backgroundColor: "#007bff",
+                          backgroundColor: consentChecked ? "#007bff" : "#ccc",
                           color: "#fff",
                           border: "none",
                           borderRadius: "4px",
-                          cursor: "pointer",
+                          cursor: consentChecked ? "pointer" : "not-allowed",
                           fontWeight: "bold",
                         }}
                       >
