@@ -96,28 +96,22 @@ const ChatbotWidget = () => {
             ...prevMessages,
             {
                 role: 'assistant',
-                content: "👋 Interested in learning the secrets of removing hard inquiries? Click below to get our free guide: 'The Easy & Fast Way to Delete Inquiries'!",
+                content: "👋 Interested in learning the secrets of removing hard inquiries? Click below to get our free guide: [Yes, tell me more!](#yes-leadmagnet) | [No, thanks.](#no-leadmagnet)",
             },
-            {
-                role: 'leadMagnetOffer',
-                content: null,
-            }
         ]);
     };
 
-    const handleShowLeadMagnetForm = () => {
-        setCollectingInfo(true);
-        setOfferedLeadMagnet(false);
-        setMessages(prevMessages => prevMessages.map(msg =>
-            msg.role === 'leadMagnetOffer' ?
-            { role: 'assistant', content: "Great! To get your free guide, please provide your name, email, and phone below:" } :
-            msg
-        ));
-    };
-
-    const handleRejectLeadMagnet = () => {
-        setOfferedLeadMagnet(false);
-        setMessages(prevMessages => prevMessages.filter(msg => msg.role !== 'leadMagnetOffer'));
+    const handleLeadMagnetAction = (action) => {
+        if (action === 'yes') {
+            setCollectingInfo(true);
+            setOfferedLeadMagnet(false);
+            setMessages(prevMessages => [
+                ...prevMessages,
+                { role: 'assistant', content: "Great! To get your free guide, please provide your name, email, and phone below:" }
+            ]);
+        } else if (action === 'no') {
+            setOfferedLeadMagnet(false);
+        }
     };
 
     const handleInfoSubmit = async () => {
@@ -176,15 +170,7 @@ const ChatbotWidget = () => {
         const inquiryKeywords = ['inquiry', 'inquiries', 'hard inquiry'];
 
         if (!offeredLeadMagnet && !collectingInfo && !infoCollected && (userMessageCount >= 3 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.includes(keyword))))) {
-            // Move lead magnet offer directly into the chat
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    role: 'assistant',
-                    content: "👋 Interested in learning the secrets of removing hard inquiries? [Yes, tell me more!](#) | [No, thanks.](#)",
-                },
-            ]);
-            setOfferedLeadMagnet(true); // Still set this to avoid multiple offers
+            offerLeadMagnet();
         }
 
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -249,16 +235,15 @@ const ChatbotWidget = () => {
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     lineHeight: '1.3',
-                                    minHeight: 'auto', // Ensure bubbles size to content
+                                    minHeight: 'auto',
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     {msg.role === 'leadMagnetOffer' ? (
                                         <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
-                                            {/* These buttons will likely need custom click handlers within ReactMarkdown */}
-                                            <button onClick={handleShowLeadMagnetForm} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                            <button onClick={() => handleLeadMagnetAction('yes')} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                                                 Yes, tell me more!
                                             </button>
-                                            <button onClick={handleRejectLeadMagnet} style={{ padding: '8px 15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                            <button onClick={() => handleLeadMagnetAction('no')} style={{ padding: '8px 15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                                                 No, thanks.
                                             </button>
                                         </div>
@@ -357,6 +342,5 @@ const ChatbotWidget = () => {
             )}
         </div>
     );
-};
 
 export default ChatbotWidget;
