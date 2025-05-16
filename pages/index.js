@@ -5,9 +5,9 @@ import ReactMarkdown from "react-markdown";
 const LEAD_MAGNET_CONTENT = `Hey, welcome to Thryve! 👋
 
 Want a free copy of our “24-Hour Inquiry Removal Guide” that shows you how to quickly remove hard inquiries from your credit report—step by step?`;
+
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/22909312/27596qv/";
 
-// ---- MAIN COMPONENT ----
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(true);
   const [messages, setMessages] = useState([
@@ -171,6 +171,7 @@ const ChatbotWidget = () => {
     ),
   };
 
+  // ---- THE ACTUAL WIDGET ----
   return (
     <div
       style={{
@@ -211,7 +212,13 @@ const ChatbotWidget = () => {
           >
             <strong style={{ fontSize: "1.1em" }}>Thryve AI Chat</strong>
             <button
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                // Close the parent iframe if embedded
+                if (window.parent) {
+                  window.parent.postMessage("closeThryveChatbot", "*");
+                }
+                // Optionally also setOpen(false); if using as a standalone component
+              }}
               style={{
                 border: "none",
                 backgroundColor: "transparent",
@@ -435,23 +442,7 @@ const ChatbotWidget = () => {
             </div>
           )}
         </div>
-      ) : (
-        <button
-          onClick={() => setOpen(true)}
-          style={{
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            padding: "12px 18px",
-            borderRadius: "25px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-          }}
-        >
-          💬 Thryve Chatbot
-        </button>
-      )}
+      ) : null}
     </div>
   );
 };
