@@ -18,6 +18,7 @@ const ChatbotWidget = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [showLeadMagnetPrompt, setShowLeadMagnetPrompt] = useState(false);
 
     const toggleChat = () => setOpen(!open);
 
@@ -79,6 +80,18 @@ const ChatbotWidget = () => {
         }
     };
 
+    const handleShowLeadMagnet = () => {
+        setShowLeadMagnetPrompt(false);
+        setCollectingInfo(true);
+        setMessages(prevMessages => [
+            ...prevMessages,
+            {
+                role: 'assistant',
+                content: "Great! To get your free guide: 'The Easy & Fast Way to Delete Inquiries', please provide your name, email, and phone below:",
+            },
+        ]);
+    };
+
     const handleInfoSubmit = async () => {
         if (!name || !email) {
             alert('Please provide your name and email.');
@@ -132,24 +145,15 @@ const ChatbotWidget = () => {
     };
 
     useEffect(() => {
-        // Trigger lead magnet after 2 messages or if the user asks about inquiries
-        const lastUserMessage = messages.slice(-2).find(msg => msg.role === 'user');
+        const lastUserMessage = messages.slice(-1)[0]?.content?.toLowerCase();
         const inquiryKeywords = ['inquiry', 'inquiries', 'hard inquiry'];
 
-        if ((userMessageCount >= 2 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.content.toLowerCase().includes(keyword)))) && !collectingInfo && !infoCollected) {
-            setCollectingInfo(true);
-            setMessages(prevMessages => [
-                ...prevMessages,
-                {
-                    role: 'assistant',
-                    content: "👋 Ready to learn the secrets of removing hard inquiries? Get our free guide: 'The Easy & Fast Way to Delete Inquiries' by providing your name, email, and phone below!",
-                },
-            ]);
+        if (!collectingInfo && !infoCollected && (userMessageCount >= 3 || (lastUserMessage && inquiryKeywords.some(keyword => lastUserMessage.includes(keyword))))) {
+            setShowLeadMagnetPrompt(true);
         }
 
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, userMessageCount, collectingInfo, infoCollected]);
-
 
     return (
         <div style={{
@@ -168,7 +172,7 @@ const ChatbotWidget = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 'auto',
+                    maxHeight: '500px', // Enable scroll
                 }}>
                     <div style={{
                         backgroundColor: '#007bff',
@@ -209,12 +213,12 @@ const ChatbotWidget = () => {
                                     maxWidth: '80%',
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
+                                    lineHeight: '1.3', // Adjust line spacing
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
-                                    <div style={{ height: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                                    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
                                         <ReactMarkdown
                                             children={msg.content}
-                                            style={{ whiteSpace: "pre-wrap" }}
                                             components={{
                                                 strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
                                             }}
@@ -225,7 +229,14 @@ const ChatbotWidget = () => {
                         ))}
                         <div ref={bottomRef} />
                     </div>
-                    {collectingInfo && !infoCollected ? (
+                    {showLeadMagnetPrompt && !collectingInfo && !infoCollected ? (
+                        <div style={{ padding: '10px', borderTop: '1px solid #ddd', textAlign: 'center' }}>
+                            <p>Interested in learning how to remove hard inquiries?</p>
+                            <button onClick={handleShowLeadMagnet} style={{ padding: '8px 15px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                Yes, tell me more!
+                            </button>
+                        </div>
+                    ) : collectingInfo && !infoCollected ? (
                         <div style={{ padding: '10px', borderTop: '1px solid #ddd' }}>
                             <input
                                 type="text"
