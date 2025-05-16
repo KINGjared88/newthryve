@@ -241,7 +241,7 @@ const ChatbotWidget = () => {
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     lineHeight: '1.3',
-                                    minHeight: '40px',
+                                    minHeight: 'auto', // Adjusted minHeight
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     {msg.role === 'leadMagnetOffer' ? (
