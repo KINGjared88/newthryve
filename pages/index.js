@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
 const ChatbotWidget = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
@@ -12,6 +12,7 @@ const ChatbotWidget = () => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef(null);
+    const [userMessageCount, setUserMessageCount] = useState(0); // Counter for user messages
 
     // State for lead capture form
     const [name, setName] = useState('');
@@ -34,6 +35,7 @@ const ChatbotWidget = () => {
         setMessages(newMessages);
         setInput('');
         setLoading(true);
+        setUserMessageCount(userMessageCount + 1); // Increment user message count
 
         try {
             const response = await fetch('/api/chat', {
@@ -72,14 +74,14 @@ const ChatbotWidget = () => {
             setLoading(false);
         }
 
-        // Start collecting info after the first message
-        if (!collectingInfo && !infoCollected) {
+        // Start collecting info after 2 user messages (adjust as needed)
+        if (userMessageCount >= 2 && !collectingInfo && !infoCollected) {
             setCollectingInfo(true);
             setMessages(prevMessages => [
                 ...prevMessages,
                 {
                     role: 'assistant',
-                    content: "Before we continue, please provide your name and email to get your free download.",
+                    content: "Unlock the secrets to disputing hard inquiries! Get our free guide: 'The Easy & Fast Way to Delete Inquiries' by providing your name and email below.",
                 },
             ]);
         }
@@ -95,7 +97,7 @@ const ChatbotWidget = () => {
             ...prevMessages,
             {
                 role: 'assistant',
-                content: `Thank you, ${name}! We'll email your copy of 'The Easy and Fast Way to Delete Hard Inquiries' to ${email}. We'll also send you a text message with the download link.`,
+                content: `Thank you, ${name}! We'll email your copy of 'The Easy & Fast Way to Delete Inquiries' to ${email}. We'll also send you a text message with the download link.`,
             },
         ]);
         setCollectingInfo(false);
@@ -146,10 +148,10 @@ const ChatbotWidget = () => {
     return (
         <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
             {open ? (
-                <div style={{ width: '350px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '500px' }}>
-                    <div style={{ backgroundColor: '#007bff', color: '#fff', padding: '12px', textAlign: 'center', fontWeight: 'bold', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        Thryve AI Chat
-                        <button onClick={toggleChat} style={{ border: 'none', backgroundColor: 'transparent', fontSize: '18px', cursor: 'pointer', color: '#fff' }}>×</button>
+                <div style={{ width: '350px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'auto' }}> {/* Adjusted height */}
+                    <div style={{ backgroundColor: '#007bff', color: '#fff', padding: '12px', textAlign: 'center', fontWeight: 'bold', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}> {/* Centered header */}
+                        <strong style={{ fontSize: '1.1em' }}>Thryve AI Chat</strong> {/* Slightly larger */}
+                        <button onClick={toggleChat} style={{ border: 'none', backgroundColor: 'transparent', fontSize: '18px', cursor: 'pointer', color: '#fff', marginLeft: 'auto' }}>×</button> {/* Moved close button */}
                     </div>
                     <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px' }}>
                         {messages.map((msg, index) => (
@@ -197,7 +199,7 @@ const ChatbotWidget = () => {
                                 style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
                             <button onClick={handleInfoSubmit} style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                Submit
+                                Get Your Free Guide
                             </button>
                         </div>
                     ) : (
