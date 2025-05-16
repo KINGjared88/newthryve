@@ -149,9 +149,33 @@ const ChatbotWidget = () => {
         <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
             {open ? (
                 <div style={{ width: '350px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'auto' }}> {/* Adjusted height */}
-                    <div style={{ backgroundColor: '#007bff', color: '#fff', padding: '12px', textAlign: 'center', fontWeight: 'bold', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}> {/* Centered header */}
-                        <strong style={{ fontSize: '1.1em' }}>Thryve AI Chat</strong> {/* Slightly larger */}
-                        <button onClick={toggleChat} style={{ border: 'none', backgroundColor: 'transparent', fontSize: '18px', cursor: 'pointer', color: '#fff', marginLeft: 'auto' }}>×</button> {/* Moved close button */}
+                    <div style={{
+                        backgroundColor: '#007bff',
+                        color: '#fff',
+                        padding: '12px',
+                        fontWeight: 'bold',
+                        borderTopLeftRadius: '12px',
+                        borderTopRightRadius: '12px',
+                        display: 'flex',
+                        justifyContent: 'center', // Center items horizontally
+                        alignItems: 'center', // Center items vertically
+                        position: 'relative', // For absolute positioning of the close button
+                    }}>
+                        <strong style={{ fontSize: '1.1em' }}>Thryve AI Chat</strong>
+                        <button
+                            onClick={toggleChat}
+                            style={{
+                                border: 'none',
+                                backgroundColor: 'transparent',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                color: '#fff',
+                                position: 'absolute',
+                                right: '10px', // Adjust as needed
+                            }}
+                        >
+                            ×
+                        </button>
                     </div>
                     <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px' }}>
                         {messages.map((msg, index) => (
@@ -164,6 +188,8 @@ const ChatbotWidget = () => {
                                     maxWidth: '80%',
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
+                                    // height: 'auto', // Changed from width to height
+                                    // minHeight: '40px', // Added a minimum height
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     <ReactMarkdown
