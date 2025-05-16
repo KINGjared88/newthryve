@@ -111,6 +111,7 @@ const ChatbotWidget = () => {
             ]);
         } else if (action === 'no') {
             setOfferedLeadMagnet(false);
+            setMessages(prevMessages => prevMessages.filter(msg => msg.role !== 'assistant' || !msg.content.includes("Interested in learning the secrets of removing hard inquiries?")));
         }
     };
 
@@ -342,5 +343,6 @@ const ChatbotWidget = () => {
             )}
         </div>
     );
+};
 
 export default ChatbotWidget;
