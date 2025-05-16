@@ -63,3 +63,26 @@ Our **Done-For-You** service is $99/month and includes full dispute handling, su
 Q: Do you guarantee results?
 
 No company can legally guarantee outcomes, but we follow all federal laws and use`;
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const { messages } = req.body;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: thryveInfo },
+          ...messages,
+        ],
+      });
+      const reply = completion.choices[0].message.content;
+      res.status(200).json({ reply });
+    } catch (error) {
+      console.error("OpenAI Error:", error);
+      res.status(500).json({ error: "Failed to generate response" });
+    }
+  } else {
+    res.status(405).json({ error: "Method Not Allowed" });
+  }
+}
