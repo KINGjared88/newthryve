@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import DOMPurify from 'dompurify'; // Install with: npm install dompurify
+import ReactMarkdown from "react-markdown";
 
 const ChatbotWidget = () => {
     const [open, setOpen] = useState(true);
@@ -74,8 +74,8 @@ const ChatbotWidget = () => {
                 {
                     role: 'error',
                     content: "Sorry, I encountered an error while processing your request.",
-                },
-            ]);
+                    },
+                ]);
         } finally {
             setLoading(false);
             if (open && inputRef.current) {
@@ -241,7 +241,7 @@ const ChatbotWidget = () => {
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     lineHeight: '1.3',
-                                    minHeight: '40px', // Ensure a minimum height for empty messages
+                                    minHeight: '40px',
                                 }}>
                                     <strong>{msg.role === 'user' ? 'You:' : 'Thryve AI:'}</strong>
                                     {msg.role === 'leadMagnetOffer' ? (
@@ -254,7 +254,15 @@ const ChatbotWidget = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content) }} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}></div>
+                                        <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                                            <ReactMarkdown
+                                                children={msg.content}
+                                                components={{
+                                                    strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
+                                                    a: ({ node, ...props }) => <a style={{ color: '#007bff', textDecoration: 'underline' }} {...props} />,
+                                                }}
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             </div>
