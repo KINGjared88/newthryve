@@ -62,4 +62,4 @@ Our **Done-For-You** service is $99/month and includes full dispute handling, su
 
 Q: Do you guarantee results?
 
-No company can legally guarantee outcomes, but we follow all federal laws and use
+No company can legally guarantee outcomes, but we follow all federal laws and use`;
