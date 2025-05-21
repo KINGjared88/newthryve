@@ -5,8 +5,6 @@ const LEAD_MAGNET_CONTENT = `Hey, welcome to Thryve! 👋
 
 Want a free copy of our “24-Hour Inquiry Removal Guide” that shows you how to quickly remove hard inquiries from your credit report—step by step?`;
 
-const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/22909312/27596qv/";
-
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(true);
   const [messages, setMessages] = useState([
@@ -156,7 +154,7 @@ const ChatbotWidget = () => {
     }
   };
 
-  // Send info to Zapier
+  // Send info to backend API (which forwards to Zapier)
   const handleInfoSubmit = async () => {
     if (!name.trim() || !email.trim()) {
       alert("Please provide your name and email.");
@@ -174,7 +172,8 @@ const ChatbotWidget = () => {
     setInfoCollected(true);
 
     try {
-      await fetch(ZAPIER_WEBHOOK_URL, {
+      // CORS-free! POST to your own backend, not Zapier directly.
+      await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone }),
